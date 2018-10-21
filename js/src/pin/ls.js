@@ -33,7 +33,7 @@ module.exports = (createCommon, options) => {
         parallel([
           // two files wrapped in a directory, root CID pinned recursively
           (cb) => {
-            const dir = fixtures.directory.files.map((file) => ({path: file.path, content: file.data}))
+            const dir = fixtures.directory.files.map((file) => ({ path: file.path, content: file.data }))
             ipfs.files.add(dir, { pin: false }, (err, res) => {
               if (err) return cb(err)
               ipfs.pin.add(fixtures.directory.cid, { recursive: true }, cb)
@@ -90,6 +90,14 @@ module.exports = (createCommon, options) => {
           type: 'recursive',
           hash: fixtures.directory.cid
         })
+        expect(pinset).to.deep.include({
+          type: 'indirect',
+          hash: fixtures.directory.files[0].cid
+        })
+        expect(pinset).to.deep.include({
+          type: 'indirect',
+          hash: fixtures.directory.files[1].cid
+        })
         done()
       })
     })
@@ -111,6 +119,14 @@ module.exports = (createCommon, options) => {
         expect(pinset).to.deep.include({
           type: 'direct',
           hash: fixtures.files[1].cid
+        })
+        expect(pinset).to.deep.include({
+          type: 'indirect',
+          hash: fixtures.directory.files[0].cid
+        })
+        expect(pinset).to.deep.include({
+          type: 'indirect',
+          hash: fixtures.directory.files[1].cid
         })
         done()
       })
@@ -134,12 +150,21 @@ module.exports = (createCommon, options) => {
             type: 'direct',
             hash: fixtures.files[1].cid
           })
+          expect(pinset).to.deep.include({
+            type: 'indirect',
+            hash: fixtures.directory.files[0].cid
+          })
+          expect(pinset).to.deep.include({
+            type: 'indirect',
+            hash: fixtures.directory.files[1].cid
+          })
         })
     })
 
     it('should list all direct pins', (done) => {
       ipfs.pin.ls({ type: 'direct' }, (err, pinset) => {
         expect(err).to.not.exist()
+        expect(pinset).to.have.lengthOf(1)
         expect(pinset).to.deep.include({
           type: 'direct',
           hash: fixtures.files[1].cid
